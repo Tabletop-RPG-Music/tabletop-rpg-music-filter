@@ -1,0 +1,28 @@
+{
+  "id": "tabletop-rpg-music-filter",
+  "title": "Tabletop RPG Music - Filter & Importer",
+  "description": "<p>The shared search, filter, preview, and playlist import tool for Tabletop RPG Music content modules. Install alongside the <a href='https://www.patreon.com/tabletoprpgmusic' title='Patreon'>Patreon module</a> or any Tabletop RPG Music pack - it automatically detects installed music modules and lets you filter the combined library by mood, scene, setting, and more.</p>",
+  "authors": [
+    {
+      "name": "Tabletop RPG Music"
+    }
+  ],
+  "url": "https://tabletoprpgmusic.com",
+  "bugs": "https://github.com/Tabletop-RPG-Music/tabletop-rpg-music-filter/issues",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "14"
+  },
+  "manifest": "https://github.com/Tabletop-RPG-Music/tabletop-rpg-music-filter/releases/latest/download/module.json",
+  "download": "https://github.com/Tabletop-RPG-Music/tabletop-rpg-music-filter/releases/download/v1.0.0/module.zip",
+  "socket": false,
+  "protected": false,
+  "coreTranslation": false,
+  "scripts": [
+    "scripts/music-filter.js"
+  ],
+  "styles": [
+    "styles/music-filter.css"
+  ]
+}

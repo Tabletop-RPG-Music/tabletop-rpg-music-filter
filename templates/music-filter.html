@@ -1,0 +1,159 @@
+<div class="music-library">
+  <p class="tag-instructions">
+    Click tags to filter the results. Click tags again to exclude them from the results:
+  </p>
+  <!-- Header: Tag Filters and Extra Controls -->
+  <div class="header">
+    <div class="tag-filters">
+      {{#each tagCategories}}
+        <div class="tag-filter-category" data-category="{{category}}">
+          <div class="tag-label">{{category}}:</div>
+          <div class="tag-values">
+            {{#each tags}}
+              <span class="tag-text {{cssClass}}"
+                    data-action="toggleTag"
+                    data-category="{{../category}}"
+                    data-tag="{{name}}"
+                    {{#if dead}}title="No tracks match this with your current filters"{{/if}}>
+                {{name}}
+              </span>
+            {{/each}}
+          </div>
+        </div>
+      {{/each}}
+    </div>
+    <div class="filter-controls">
+      <div class="extra-controls">
+        <label><input type="checkbox" class="extra-control" data-control="showStandard"   {{#if extraControls.showStandard}}checked{{/if}}> Standard</label>
+        <label><input type="checkbox" class="extra-control" data-control="showBonus"      {{#if extraControls.showBonus}}checked{{/if}}> Bonus</label>
+        <label><input type="checkbox" class="extra-control" data-control="showAlternate" {{#if extraControls.showAlternate}}checked{{/if}}> Alternate</label>
+        <label><input type="checkbox" class="extra-control" data-control="showOnlyNew"    {{#if extraControls.showOnlyNew}}checked{{/if}}> New Only</label>
+      </div>
+      {{#if multiSource}}
+        <div class="extra-controls source-controls">
+          <span class="source-controls-label">Sources:</span>
+          {{#each sources}}
+            <label><input type="checkbox" class="source-control" data-source="{{id}}" {{#if visible}}checked{{/if}}> {{label}}</label>
+          {{/each}}
+        </div>
+      {{/if}}
+    </div>
+    <!-- Search Bar -->
+      <div class="tag-search-container">
+        <input type="text" name="tag-search" class="tag-search" placeholder="Search filtered tracks..." value="{{searchTerm}}">
+      </div>
+    <!-- Sticky "Add All" Header above the track list -->
+    <div class="queue-header">
+      <button type="button" class="add-all-btn" data-action="addAll" title="Add all filtered tracks to queue">
+        <i class="fas fa-plus"></i> Add All
+      </button>
+      <button type="button" class="clear-filters" data-action="clearFilters" title="Clear all filters">
+        Clear Filters
+      </button>
+      <!-- Sorting Button -->
+      <button type="button" id="sort-toggle-btn" class="sort-toggle" data-action="toggleSort" title="Toggle sorting order">
+        {{#if sortAlphabetical}}
+          <i class="fas fa-sort-alpha-down"></i> Alphabetical
+        {{else}}
+          <i class="fas fa-sort-numeric-down-alt"></i> Release Order
+        {{/if}}
+      </button>
+      <span class="track-count">{{totalTracks}} tracks</span>
+    </div>
+
+
+  </div>
+  
+  <!-- Scrollable Content: Track List -->
+  <div class="content">
+    <ul class="track-list">
+      {{#if tracksToDisplay.length}}
+        {{#each tracksToDisplay}}
+          <li class="track-item {{#if (contains ../importQueue title)}}in-queue{{/if}}">
+            <!-- Queue Button: plus if not in queue, minus if in queue -->
+            <button type="button" class="queue-button" data-action="queueTrack" data-track-title="{{title}}">
+              {{#if (contains ../importQueue title)}}
+                <i class="fas fa-minus"></i>
+              {{else}}
+                <i class="fas fa-plus"></i>
+              {{/if}}
+            </button>
+            <span class="track-title">{{title}}{{#if ../multiSource}} <span class="source-badge">{{sourceLabel}}</span>{{/if}}</span>
+            <span class="track-tags">
+              {{#each flattenedTags}}
+                <span class="tag">{{this}}</span>
+              {{/each}}
+            </span>
+            <!-- Show Stop button if playing, else Play button -->
+            {{#if (eq ../currentlyPlaying title)}}
+              <button type="button" class="stop-button" data-action="stop" data-track-title="{{title}}">
+                <i class="fas fa-stop"></i>
+              </button>
+            {{else}}
+              <button type="button" class="play-button" data-action="play" data-track-title="{{title}}">
+                <i class="fas fa-play"></i>
+              </button>
+            {{/if}}
+          </li>
+        {{/each}}
+      {{else}}
+        {{#if noSources}}
+          <li class="no-sources">
+            No Tabletop RPG Music content modules are installed and enabled.
+            Install the <a href="https://www.patreon.com/tabletoprpgmusic" target="_blank" rel="noopener">Patreon module</a>
+            or a Tabletop RPG Music pack, enable it, and reload.
+          </li>
+        {{else}}
+          <li>No tracks found</li>
+        {{/if}}
+      {{/if}}
+    </ul>
+  </div>
+
+  
+  <!-- Footer: Import Queue Display and Controls -->
+  <div class="import-fixed">
+    <div class="queue-display">
+      <div class="queue-items">
+        {{#if importQueue.length}}
+          {{#each importQueue}}
+            <span class="queue-item" data-action="removeFromQueue" data-track-title="{{this}}" title="Click to remove from queue">{{this}}</span>
+          {{/each}}
+        {{else}}
+          <span class="queue-item empty">Selected Tracks (empty)</span>
+        {{/if}}
+      </div>
+    </div>
+    <div class="footer-controls">
+      <button type="button" class="clear-queue-btn" data-action="clearQueue" title="Clear Queue">Clear Selection</button>
+      <label>
+        Track Type:
+        <select class="playback-mode">
+          <option value="standard" {{#if (eq playbackMode "standard")}}selected{{/if}}>Normal format</option>
+          <option value="seamless" {{#if (eq playbackMode "seamless")}}selected{{/if}}>Seamless Loop</option>
+        </select>
+      </label>
+      <label>
+        <input type="checkbox" class="force-loop-import" {{#if forceLoopImport}}checked{{/if}} {{#if forceLoopDisabled}}disabled{{/if}}>
+        Set to Loop
+      </label>
+    </div>
+
+    <div class="footer-inputs playlist-row">
+      <input type="text" name="playlist-name-input" id="playlist-name-input" class="playlist-name-input" placeholder="Playlist Name (auto-generated if blank)" value="{{playlistName}}">
+      <button type="button" class="import-btn" data-action="importNew"><i class="fas fa-file"></i> Create New Playlist</button>
+    </div>
+
+    <div class="footer-inputs existing-playlist-row">
+      <div class="left-section">
+        <select name="existing-playlist" id="existing-playlist" class="existing-playlist-dropdown">
+          <option value="">-- Select a Playlist --</option>
+          {{#each existingPlaylists}}
+            <option value="{{_id}}" {{#if (eq ../selectedPlaylist _id)}}selected{{/if}}>{{name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <button type="button" class="add-to-existing-btn" data-action="addToExisting"><i class="fas fa-file-import"></i> Add to Existing Playlist</button>
+    </div>
+  </div>
+</div>

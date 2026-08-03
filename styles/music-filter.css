@@ -1,0 +1,392 @@
+/* =====================================================================
+   Music Library - layout-only styling.
+   Colors, borders, button styles, form controls all inherit from
+   Foundry V2's native theming (including dark/light mode).
+   ===================================================================== */
+
+/* V2 part wrapper: make the flex column fill the window */
+#music-library-app .window-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+#music-library-app [data-application-part="main"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------------------
+   Root container
+   ------------------------------------------------------------------- */
+.music-library {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.music-library .tag-instructions {
+  font-size: var(--font-size-14);
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Playlist directory button */
+.music-library-btn {
+  margin-right: 8px !important;
+  max-width: 290px;
+}
+
+/* -------------------------------------------------------------------
+   Header (tag filters + controls)
+   ------------------------------------------------------------------- */
+.music-library .header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.music-library .tag-filters {
+  display: flex;
+  flex-direction: column;
+}
+
+.music-library .tag-filter-category {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1px 0;
+}
+
+.music-library .tag-label {
+  min-width: 60px;
+  font-weight: bold;
+  line-height: 1.9;
+}
+
+.music-library .tag-values {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+/* Tag chips: explicit rgba so they're always visible regardless of theme */
+.music-library .tag-text {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: var(--font-size-12);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+  line-height: 1.6;
+}
+
+.music-library .tag-text:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.music-library .tag-text.include {
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
+}
+
+.music-library .tag-text.exclude {
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
+  text-decoration: line-through;
+}
+
+/* Dead-end tags: no tracks match this with the current filters. Dimmed but
+   still clickable, matching the website's behaviour. */
+.music-library .tag-text.dead {
+  opacity: 0.35;
+}
+
+.music-library .tag-text.dead:hover {
+  opacity: 0.6;
+}
+
+/* Extra controls row (Standard / Bonus / etc.) */
+.music-library .extra-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.music-library .extra-controls label {
+  font-size: var(--font-size-13);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Per-source visibility row (only rendered with 2+ sources) */
+.music-library .source-controls {
+  padding-top: 2px;
+}
+
+.music-library .source-controls-label {
+  font-size: var(--font-size-13);
+  font-weight: bold;
+}
+
+/* Source badge on track rows (only rendered with 2+ sources) */
+.music-library .source-badge {
+  display: inline-block;
+  font-size: var(--font-size-10);
+  font-weight: normal;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  opacity: 0.8;
+  vertical-align: middle;
+}
+
+/* Empty state when no content modules are enabled */
+.music-library .no-sources {
+  padding: 1rem;
+  font-size: var(--font-size-13);
+  opacity: 0.85;
+}
+
+/* Search bar */
+.music-library .tag-search-container {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.music-library .tag-search {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Row above track list: Add All / Clear Filters / Sort / count */
+.music-library .queue-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #555);
+}
+
+.music-library .queue-header button {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.music-library .track-count {
+  font-size: var(--font-size-12);
+  opacity: 0.7;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* -------------------------------------------------------------------
+   Scrollable track list
+   ------------------------------------------------------------------- */
+.music-library .content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.music-library .track-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.music-library .track-item {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 260px) 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border-bottom: 1px solid var(--color-border-light-tertiary, #444);
+  transition: background 0.15s;
+}
+
+.music-library .track-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.music-library .track-item.in-queue {
+  background: rgba(100, 180, 255, 0.1);
+}
+
+.music-library .track-title {
+  font-weight: bold;
+  font-size: var(--font-size-13);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-library .track-tags {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 3px;
+  overflow: hidden;
+  position: relative;
+  min-width: 0;
+  /* Fade-out on the right to hint at overflow */
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+}
+
+/* On hovering the tags area: let them wrap to multiple lines and drop the fade */
+.music-library .track-tags:hover {
+  flex-wrap: wrap;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+.music-library .track-tags .tag {
+  display: inline-block;
+  font-size: var(--font-size-11);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.music-library .queue-button,
+.music-library .play-button,
+.music-library .stop-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.music-library .queue-button:hover,
+.music-library .play-button:hover,
+.music-library .stop-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* -------------------------------------------------------------------
+   Footer (import queue + controls)
+   ------------------------------------------------------------------- */
+.music-library .import-fixed {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border-light-tertiary, #555);
+}
+
+.music-library .queue-display {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.music-library .queue-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.music-library .queue-item {
+  display: inline-block;
+  font-size: var(--font-size-11);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(100, 180, 255, 0.2);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.music-library .queue-item:hover {
+  text-decoration: line-through;
+}
+
+.music-library .queue-item.empty {
+  font-style: italic;
+  opacity: 0.6;
+  background: transparent;
+  cursor: default;
+}
+
+.music-library .queue-item.empty:hover {
+  text-decoration: none;
+}
+
+/* Footer control rows */
+.music-library .footer-controls,
+.music-library .playlist-row,
+.music-library .existing-playlist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.music-library .footer-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-13);
+  margin: 0;
+}
+
+.music-library .existing-playlist-row .left-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.music-library .playlist-name-input,
+.music-library .existing-playlist-dropdown {
+  flex: 1;
+}
+
+.music-library .import-btn,
+.music-library .add-to-existing-btn,
+.music-library .clear-queue-btn {
+  flex: 0 0 auto;
+}
+
+/* -------------------------------------------------------------------
+   Narrow viewport adjustments
+   ------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  .music-library .track-item {
+    grid-template-columns: auto minmax(120px, 1fr) auto;
+  }
+  .music-library .track-tags {
+    display: none;
+  }
+  .music-library .track-title {
+    font-size: var(--font-size-12);
+  }
+}
