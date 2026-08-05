@@ -9,7 +9,7 @@
   ],
   "url": "https://tabletoprpgmusic.com",
   "bugs": "https://github.com/Tabletop-RPG-Music/tabletop-rpg-music-filter/issues",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": {
     "minimum": "12",
     "verified": "14"
