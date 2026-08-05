@@ -1,3 +1,11 @@
+
+// Tabletop RPG Music - Filter & Importer
+//
+
+
+(() => {
+"use strict";
+
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 // ---------------------------------------------------------------------------
@@ -805,3 +813,20 @@ Hooks.on("renderPlaylistDirectory", (app, html) => {
   // sharing the same DOM id and silently repoint the singleton reference.
   $btn.on("click", () => (MusicLibraryApp.instance ?? new MusicLibraryApp()).render({ force: true }));
 });
+
+
+// ---------------------------------------------------------------------------
+// Deliberate global exports.
+//
+// Assignment to `window` (unlike a top-level `const`) silently overwrites
+// rather than throwing, so these can never break another module's script.
+// `trackDatabase` and `sources` are re-assigned internally as sources load,
+// so they are exposed as getters rather than copied by value.
+// ---------------------------------------------------------------------------
+
+window.getAudioFilePath = getAudioFilePath;
+window.MusicLibraryApp   = MusicLibraryApp;
+Object.defineProperty(window, "trackDatabase", { configurable: true, get: () => trackDatabase });
+Object.defineProperty(window, "musicSources",  { configurable: true, get: () => sources });
+
+})();
