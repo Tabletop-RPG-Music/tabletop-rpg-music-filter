@@ -284,6 +284,7 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     this.sortAlphabetical = false;
     this.searchTerm       = "";
+    this._searchDebounce  = null;
     this.selectedPlaylist = "";
     this.playlistName     = "";
 
@@ -338,7 +339,49 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return super._updatePosition(position);
   }
 
+  // -------------------------------------------------------------------------
+  // Caret preservation across re-renders
+  //
+  // The whole window is a single PART, so every this.render() replaces the
+  // search box with a fresh element built from the template. ApplicationV2
+  // restores focus to it but not the caret, and a newly parsed input that is
+  // focused puts the caret at index 0 - so each debounced search render sent
+  // the next keystroke to the front of the string. These two hooks carry the
+  // selection across the swap for whichever text field is focused, which
+  // covers the search box and the playlist name field alike.
+  // -------------------------------------------------------------------------
+
+  _preSyncPartState(partId, newElement, priorElement, state) {
+    super._preSyncPartState(partId, newElement, priorElement, state);
+    const focused = priorElement.querySelector(":focus");
+    if (focused && typeof focused.selectionStart === "number") {
+      state.trpgSelection = {
+        start:     focused.selectionStart,
+        end:       focused.selectionEnd,
+        direction: focused.selectionDirection || "none"
+      };
+    }
+  }
+
+  _syncPartState(partId, newElement, priorElement, state) {
+    super._syncPartState(partId, newElement, priorElement, state);
+    const sel = state.trpgSelection;
+    if (!sel) return;
+    // super has just restored focus; only touch the field that actually has it.
+    const active = document.activeElement;
+    if (!active || !newElement.contains(active)) return;
+    if (typeof active.setSelectionRange !== "function") return;
+    const max = active.value?.length ?? 0;
+    try {
+      active.setSelectionRange(Math.min(sel.start, max), Math.min(sel.end, max), sel.direction);
+    }
+    catch (err) {
+      // Some input types refuse selection ranges; nothing to recover here.
+    }
+  }
+
   async close(options = {}) {
+    clearTimeout(this._searchDebounce);
     this._stopPreview();
     if (MusicLibraryApp.instance === this) MusicLibraryApp.instance = null;
     return super.close(options);
@@ -548,11 +591,13 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Search input: debounced re-render.
     const searchInput = root.querySelector(".tag-search");
     if (searchInput) {
-      let debounce;
       searchInput.addEventListener("input", ev => {
         this.searchTerm = ev.currentTarget.value;
-        clearTimeout(debounce);
-        debounce = setTimeout(() => this.render(), 150);
+        // The timer lives on the instance, not in this closure: a render
+        // triggered by anything else replaces the element and with it the
+        // closure, leaving an orphaned timer that nothing can cancel.
+        clearTimeout(this._searchDebounce);
+        this._searchDebounce = setTimeout(() => this.render(), 150);
       });
     }
 
