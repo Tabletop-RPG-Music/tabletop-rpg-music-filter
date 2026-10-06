@@ -228,6 +228,75 @@ function safeDownloads(d) {
   return Object.keys(out).length ? out : null;
 }
 
+/**
+ * A click menu for Foundry v12. v12's ContextMenu adds its menu inside the
+ * element that was clicked, so inside a card (overflow: hidden, to round its
+ * corners) or the scrolling grid it is drawn but clipped out of sight. This
+ * builds the same markup core uses (nav#context-menu > ol.context-items >
+ * li.context-item), so core's stylesheet styles it, but attaches it to the
+ * page and positions it against the button, where nothing can clip it.
+ * v13+ is unaffected and keeps using core's ContextMenu.
+ *
+ * items: [{ name, icon, callback }]. Returns nothing; closes itself.
+ */
+function openPopupMenu(anchor, items) {
+  closePopupMenu();
+  if (!items.length) return;
+
+  const nav = document.createElement("nav");
+  nav.id = "context-menu";
+  nav.className = "trpg-popup-menu";
+  const ol = document.createElement("ol");
+  ol.className = "context-items";
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.className = "context-item";
+    li.innerHTML = `${item.icon ?? ""}${foundry.utils.escapeHTML?.(item.name) ?? item.name}`;
+    li.addEventListener("click", ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      closePopupMenu();
+      item.callback();
+    });
+    ol.appendChild(li);
+  }
+  nav.appendChild(ol);
+  nav.style.position = "fixed";
+  nav.style.zIndex = "10000";
+  nav.style.visibility = "hidden";
+  document.body.appendChild(nav);
+
+  // Below the button, right edges aligned; above it if there isn't room below.
+  const a = anchor.getBoundingClientRect();
+  const m = nav.getBoundingClientRect();
+  const below = a.bottom + 2;
+  const top = below + m.height > window.innerHeight - 4 ? Math.max(4, a.top - m.height - 2) : below;
+  const left = Math.min(Math.max(4, a.right - m.width), window.innerWidth - m.width - 4);
+  nav.style.top = `${top}px`;
+  nav.style.left = `${left}px`;
+  nav.style.visibility = "";
+
+  const outside = ev => { if (!nav.contains(ev.target) && ev.target !== anchor && !anchor.contains(ev.target)) closePopupMenu(); };
+  const key = ev => { if (ev.key === "Escape") closePopupMenu(); };
+  const away = () => closePopupMenu();
+  document.addEventListener("pointerdown", outside, true);
+  document.addEventListener("keydown", key, true);
+  window.addEventListener("resize", away);
+  document.addEventListener("scroll", away, true);
+  openPopupMenu.close = () => {
+    document.removeEventListener("pointerdown", outside, true);
+    document.removeEventListener("keydown", key, true);
+    window.removeEventListener("resize", away);
+    document.removeEventListener("scroll", away, true);
+    nav.remove();
+  };
+}
+
+function closePopupMenu() {
+  openPopupMenu.close?.();
+  openPopupMenu.close = null;
+}
+
 /** "3:04" from 184. */
 function formatDuration(seconds) {
   const n = Math.round(Number(seconds));
@@ -667,6 +736,7 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
     clearTimeout(this._searchDebounce);
     clearTimeout(this._tagFilterDebounce);
     this._stopPreview();
+    closePopupMenu();
     if (MusicLibraryApp.instance === this) MusicLibraryApp.instance = null;
     return super.close(options);
   }
@@ -1163,6 +1233,7 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _onRender(context, options) {
     super._onRender?.(context, options);
+    closePopupMenu();
     const root = this.element;
 
     // Track type checkboxes (showStandard / showBonus / etc.)
@@ -1298,19 +1369,14 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
       // v13+ has the namespaced class, which takes a plain element. v12 only
       // has the older global, which expects the element wrapped in jQuery.
       const modern = foundry.applications?.ux?.ContextMenu;
-      // v12's ContextMenu is a top-level class in foundry.js: reachable by its
-      // bare name, but not a property of globalThis.
-      const CM = modern?.implementation ?? modern
-              ?? (typeof ContextMenu !== "undefined" ? ContextMenu : undefined);
       const entries = (context.existingPlaylists ?? []).map(pl => ({
         name: `${pl.name} (${pl.count})`,
         icon: '<i class="fas fa-file-import"></i>',
         callback: () => this._addQueueToPlaylist(pl._id)
       }));
-      if (CM && entries.length) {
+      if (modern && entries.length) {
         try {
-          const host = modern ? splitMenu.parentElement : $(splitMenu.parentElement);
-          new CM(host, ".split-menu", entries, {
+          new (modern.implementation ?? modern)(splitMenu.parentElement, ".split-menu", entries, {
             eventName: "click",
             jQuery: false,
             fixed: true
@@ -1318,6 +1384,12 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
         } catch (err) {
           console.warn(`${MODULE_ID} | Could not build the playlist menu.`, err);
         }
+      } else if (entries.length) {
+        // v12: see openPopupMenu for why core's ContextMenu isn't used here.
+        splitMenu.addEventListener("click", ev => {
+          ev.preventDefault();
+          openPopupMenu(splitMenu, entries);
+        });
       }
     }
 
@@ -1327,24 +1399,18 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const grid = root.querySelector(".card-grid");
     if (grid && grid.querySelector(".card-download")) {
       const modern = foundry.applications?.ux?.ContextMenu;
-      // v12's ContextMenu is a top-level class in foundry.js: reachable by its
-      // bare name, but not a property of globalThis.
-      const CM = modern?.implementation ?? modern
-              ?? (typeof ContextMenu !== "undefined" ? ContextMenu : undefined);
-      // v13+ hands the callback the button; v12 hands it wrapped in jQuery.
-      const el = target => (target instanceof HTMLElement ? target : target?.[0]);
-      const entries = DOWNLOAD_FORMATS.map(f => ({
-        name: f.label,
-        icon: `<i class="fas ${f.icon}"></i>`,
-        condition: target => Boolean(el(target)?.dataset[f.key]),
-        callback:  target => {
-          const url = el(target)?.dataset[f.key];
-          if (url) window.open(url, "_blank", "noopener");
-        }
-      }));
-      if (CM) {
+      if (modern) {
+        const entries = DOWNLOAD_FORMATS.map(f => ({
+          name: f.label,
+          icon: `<i class="fas ${f.icon}"></i>`,
+          condition: target => Boolean(target?.dataset?.[f.key]),
+          callback:  target => {
+            const url = target?.dataset?.[f.key];
+            if (url) window.open(url, "_blank", "noopener");
+          }
+        }));
         try {
-          new CM(modern ? grid : $(grid), ".card-download", entries, {
+          new (modern.implementation ?? modern)(grid, ".card-download", entries, {
             eventName: "click",
             jQuery: false,
             fixed: true
@@ -1352,6 +1418,21 @@ class MusicLibraryApp extends HandlebarsApplicationMixin(ApplicationV2) {
         } catch (err) {
           console.warn(`${MODULE_ID} | Could not build the download menu.`, err);
         }
+      } else {
+        // v12: see openPopupMenu for why core's ContextMenu isn't used here.
+        // One listener on the grid serves every card's button.
+        grid.addEventListener("click", ev => {
+          const btn = ev.target.closest(".card-download");
+          if (!btn) return;
+          ev.preventDefault();
+          openPopupMenu(btn, DOWNLOAD_FORMATS
+            .filter(f => btn.dataset[f.key])
+            .map(f => ({
+              name: f.label,
+              icon: `<i class="fas ${f.icon}"></i>`,
+              callback: () => window.open(btn.dataset[f.key], "_blank", "noopener")
+            })));
+        });
       }
     }
 
